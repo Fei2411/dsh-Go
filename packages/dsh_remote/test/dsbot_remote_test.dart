@@ -79,14 +79,7 @@ void main() {
         });
         stream.push({
           'event': 'notice',
-          'data': {
-            'seq': 1,
-            'kind': 'message',
-            'botId': 'b1',
-            'name': 'Chief',
-            'text': 'ready',
-            'time': 1786000000000,
-          },
+          'data': {'seq': 1, 'kind': 'message', 'botId': 'b1', 'name': 'Chief', 'text': 'ready', 'time': 1786000000000},
         });
       });
     };
