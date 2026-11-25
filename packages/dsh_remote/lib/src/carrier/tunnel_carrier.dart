@@ -34,6 +34,8 @@ const Set<String> harnessRemoteAllowlist = {
   'credentials/set',
   'credentials/unset',
   'directoryPicker/list',
+  'dsBot/call',
+  'dsBot/feed',
   'fileReferences/list',
   'goals/clear',
   'goals/complete',
@@ -128,6 +130,25 @@ const Set<String> harnessRemoteAllowlist = {
 /// Endpoints whose binary results arrive as a base64 `data` string over the
 /// tunnel (locally they are multipart, which the HTTP carrier rejects).
 const Set<String> base64ResultEndpoints = {'workspaceFiles/readBytes', 'officeToPdf/render'};
+
+/// Read-only inner `dsBot/call` endpoints safe to replay via chunked transfer
+/// after a direct `RESPONSE_TOO_LARGE` rejection. Mutating and unknown inner
+/// endpoints are never replayed.
+const Set<String> _dsBotReplaySafeEndpoints = {
+  'hello',
+  'state',
+  'avatar',
+  'chat',
+  'room-chat',
+  'file-text',
+  'folders',
+  'memory-view',
+  'usage-summary',
+  'notices',
+  'image',
+  'file-download',
+  'markdown-image',
+};
 
 /// Requests above this go through `harness.remote.transfer.*`.
 const int directRemoteCallBytes = 2 * 1024 * 1024;
@@ -479,7 +500,8 @@ class RemoteTunnelCarrier extends DshCarrier implements WorkspaceUploadCarrier {
               endpoint == 'commands/execute' ||
               endpoint == 'settings/mutate' ||
               endpoint == 'settings/update' ||
-              endpoint == 'settings/replace') {
+              endpoint == 'settings/replace' ||
+              (endpoint == 'dsBot/call' && !_dsBotReplaySafeEndpoints.contains(args['endpoint']))) {
             rethrow;
           }
           response = await _callTransferred(session, endpoint, encoded, timeout);
